@@ -15,7 +15,13 @@
 
 ---
 
+# Required
 
+```sh
+pip install netifaces rich typer
+```
+
+<br>
 
 # Usage
 
@@ -26,14 +32,14 @@ Run TCP Chat Server
 
 <br>
 
-Select Network Interface (Default Network Interface is ens18)
+Specify the NIC (Default NIC is ens18)
 ```sh
-./tcp-chat.py s -i {NIC}
+./tcp-chat.py s {NIC}
 ```
 
 <br>
 
 Run TCP Chat Client
 ```sh
-./tcp-chat.py c
+./tcp-chat.py c {IP address}
 ```

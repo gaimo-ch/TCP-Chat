@@ -1,17 +1,23 @@
 #!/usr/bin/env python3
-import argparse
 import datetime
 import socket
 import netifaces
 from rich.console import Console
+from typing import Optional
+import typer
 
-def server(interface):
-    server_ip = netifaces.ifaddresses(interface)[netifaces.AF_INET][0]['addr']
-    server_port = 5000
-    bufsize = 4096
-    format = 'utf-8'
-    date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    console = Console()
+console = Console()
+server_port = 5000
+bufsize = 4096
+format = 'utf-8'
+date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+app = typer.Typer()
+
+@app.command("s")
+def run_server(nic: str = typer.Argument('ens18', help='Network interface (default: ens18)')):
+    """Run TCP Chat Server"""
+    server_ip = netifaces.ifaddresses(nic)[netifaces.AF_INET][0]['addr']
 
     try:
         server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -29,7 +35,7 @@ def server(interface):
             client_msg = client_socket.recv(bufsize) # クライアントからのメッセージを受信
             console.print(client_msg.decode(format), justify='center') # クライアントからのメッセージを表示
 
-            server_msg =  f'{date} - Finished'
+            server_msg = f'{date} - Finished'
             client_socket.sendall(server_msg.encode(format)) # クライアントにメッセージを送信
         
             client_socket.close()
@@ -44,20 +50,13 @@ def server(interface):
 
     console.print('Server closed', justify='center')
 
-def client():
-    server_port = 5000
-    bufsize = 4096
-    format = 'utf-8'
-    date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    console = Console()
-
+@app.command("c")
+def run_client(server_ip: str = typer.Argument(..., help='Server IP address')):
+    """Run TCP Chat Client"""
     client_socket = None
 
     try:
         console.rule('TCP Chat Client 📡', style='blue')
-
-        console.print('Enter a IP Address...', justify='center')
-        server_ip = input()
 
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         client_socket.connect((server_ip, server_port))
@@ -81,19 +80,4 @@ def client():
             client_socket.close()
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='TCP Chat')
-    subparsers = parser.add_subparsers(dest='command', help='Choose command (server or client)')
-
-    server_parser = subparsers.add_parser('s', help='Run TCP Chat Server')
-    server_parser.add_argument('-i', '--interface', type=str, default='ens18', help='Network interface (default: ens18)')
-
-    client_parser = subparsers.add_parser('c', help='Run TCP Chat Client')
-
-    args = parser.parse_args()
-
-    if args.command == 's':
-        server(args.interface)
-    elif args.command == 'c':
-        client()
-    else:
-        print("Invalid command. Use 's' or 'c'.")
+    app()
